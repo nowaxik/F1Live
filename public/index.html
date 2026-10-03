@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#101114"><title>F1Live — centrum sesji</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23fa442d'/%3E%3Cpath d='M14 18h38v8H23v7h22v8H23v12h-9z' fill='white'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="/style.css"><script type="module" src="/app.js"></script>
+</head>
+<body>
+  <header class="topbar"><a class="brand" href="/" aria-label="F1Live, strona główna"><span class="brand-mark">F<span>1</span></span> LIVE<span class="brand-divider"></span><small>RACE CENTER</small></a><span class="prototype">PROTOTYP <span>v0.3</span></span></header>
+  <main>
+    <div class="eyebrow"><span class="red-line"></span> TWÓJ WEEKEND. KAŻDA POZYCJA.</div>
+    <section class="heading"><div><h1>Cała stawka.<br><span>W jednym miejscu.</span></h1><p>Śledź kolejność kierowców i odtwarzaj przebieg sesji.</p></div><div class="mode-switch" aria-label="Źródło danych"><button id="live-mode" aria-pressed="false"><span class="live-dot"></span> Na żywo</button><button id="demo-mode" class="active" aria-pressed="true">Demo</button><button id="archive-mode" aria-pressed="false">Archiwum</button></div></section>
+    <section id="live-panel" class="live-panel" hidden>
+      <div><span class="eyebrow">PUBLICZNY F1 LIVE TIMING</span><h2 id="live-heading">Publiczny timing. Bez abonamentu.</h2><p id="live-description">Połączenie bez konta, klucza API i opłat.</p></div>
+      <button id="live-connect" class="primary">Połącz z F1 Live Timing →</button>
+      <details id="live-setup"><summary>Jak działa bezpłatny dostęp?</summary><p>Odbieramy publiczne komunikaty F1 Live Timing: kierowców, barwy zespołów i pozycje. Nie potrzebujesz konta ani pliku .env. Dostępność i zakres danych zależą od źródła i mogą się zmienić.</p><p>Po zakończeniu sesji zobaczysz oznaczoną ostatnią klasyfikację. Gdy strumień jest niedostępny, skorzystaj z demo lub darmowego archiwum OpenF1.</p></details>
+    </section>
+    <section id="archive-panel" class="archive-panel" hidden><div><label for="year">Sezon</label><select id="year"><option>2026</option><option>2025</option><option selected>2024</option><option>2023</option></select></div><button id="fetch-sessions" class="secondary">Pobierz sesje</button><div class="session-picker"><label for="session">Weekend / sesja</label><select id="session" disabled><option>Najpierw pobierz listę sesji</option></select></div><button id="load-session" class="primary" disabled>Odtwórz sesję →</button></section>
+    <div id="notice" class="notice" role="status"><span class="notice-icon">i</span><span id="notice-text">Tryb demonstracyjny • fikcyjny przebieg sesji, przykładowy skład z 2024 roku. To nie jest transmisja na żywo.</span></div>
+    <section class="session-banner"><div class="session-identity"><span class="session-icon">▰</span><div><span class="eyebrow" id="session-kicker">SANDBOX / DEMO</span><h2 id="session-title">Sesja demonstracyjna</h2></div></div><div class="session-meta"><div><span>FORMAT</span><strong id="session-format">Wyścig · demo</strong></div><div><span>ŹRÓDŁO</span><strong id="source-label">Symulacja</strong></div><span class="status-pill" id="play-status">ODTWARZANIE</span></div></section>
+    <div class="dashboard">
+      <section class="timing-panel"><div class="panel-heading"><h2>Klasyfikacja <span id="driver-count">20</span></h2><span class="subtle">POZYCJE W SESJI</span></div><div class="table-wrap"><table><thead><tr><th scope="col">POZ.</th><th scope="col">KIEROWCA</th><th scope="col" class="team-heading">ZESPÓŁ</th><th scope="col" class="movement-heading">OST. ZMIANA <span title="Różnica względem poprzedniej zarejestrowanej pozycji">ⓘ</span></th></tr></thead><tbody id="leaderboard"></tbody></table></div><div class="table-footer"><span class="small-dot"></span><span id="table-caption">Zmiany pozycji generowane na potrzeby prezentacji</span></div></section>
+      <aside>
+        <section id="live-card" class="live-card" hidden><div class="panel-heading"><h2>Połączenie z torem</h2><span class="live-dot"></span></div><dl><div><dt>STAN POŁĄCZENIA</dt><dd id="connection-state" role="status">Rozłączono</dd></div><div><dt>OSTATNI ZAPIS POZYCJI</dt><dd id="last-update">—</dd></div><div><dt>KOLEJNA SESJA</dt><dd id="next-session">—</dd></div></dl><p>Brak zmian kolejności nie oznacza utraty połączenia. Stan łącza i czas ostatniego zapisu pokazujemy oddzielnie.</p></section>
+        <section id="replay-card" class="control-card"><div class="panel-heading"><h2>Odtwarzacz sesji</h2><span class="red-icon">↺</span></div><div class="clock-label">CZAS OD POCZĄTKU SESJI</div><div class="clock" id="elapsed">00:00:00</div><div class="progress-label"><span id="progress-caption">Przebieg powtórki</span><span id="progress-percent">0%</span></div><input id="timeline" type="range" min="0" max="1000" value="0" aria-label="Przewiń sesję"><div class="timeline-labels"><span>START</span><span id="duration">01:00:00</span></div><div class="playback-buttons"><button id="restart" class="icon-button" aria-label="Odtwórz od początku" title="Od początku">↺</button><button id="play-pause" class="primary">Ⅱ Pauza</button><select id="speed" aria-label="Prędkość odtwarzania"><option value="1">1×</option><option value="5">5×</option><option value="10" selected>10×</option><option value="30">30×</option><option value="60">60×</option></select></div><p class="card-note">Przewijaj i zmieniaj tempo. Kolejność kierowców odtwarzamy według czasu zdarzeń.</p></section>
+        <section class="changes-card"><div class="panel-heading"><h2>Zmiany pozycji</h2><span class="subtle">OSTATNIE</span></div><div id="changes" class="changes"></div></section>
+        <section class="next-card"><span class="eyebrow">JEDEN WEEKEND. TRZY TRYBY.</span><h3>Bliżej toru.</h3><p>Aktualna klasyfikacja przez publiczny F1 Live Timing, powtórki archiwalne i demo do odkrywania aplikacji.</p><div class="locked-feature"><span class="outline-dot"></span>Połączenie live <span>BEZ KONTA</span></div><div class="locked-feature"><span class="outline-dot"></span>Synchronizacja z TV <span>W PLANIE</span></div><p class="next-note">Live śledzi sesję wskazaną przez źródło. Dane mogą docierać z opóźnieniem względem toru.</p></section>
+      </aside>
+    </div>
+    <footer><span class="footer-brand">F1<span>LIVE</span></span><span>Niezależny projekt fanowski. Nie jest powiązany z Formula 1 ani FIA.</span><a href="https://openf1.org/" target="_blank" rel="noreferrer">Dane archiwalne: OpenF1 ↗</a></footer>
+  </main>
+</body>
+</html>
